@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mind Pulse - Dynamic Stress Watch</title>
+    <title>Mind Pulse - Stress Watch</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
         :root {
-            --safe-green: #3cff95;
-            --warn-yellow: #f0ff3c;
-            --alert-red: #ff3c3c;
-            --active-color: var(--safe-green); /* Default dynamic color */
+            --cyan: #3cffff;
+            --yellow: #ffdf3c;
+            --red: #ff3c3c;
             --bg-dark: #030308;
             --glass-bg: rgba(255, 255, 255, 0.02);
             --glass-border: rgba(255, 255, 255, 0.05);
         }
 
         body {
-            background-color: var(--bg-dark); color: #ffffff;
-            font-family: 'Inter', sans-serif; margin: 0; padding: 0;
-            overflow-x: hidden; min-height: 100vh;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
             display: flex; justify-content: center; align-items: center;
         }
 
@@ -32,6 +34,10 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
         }
 
+        .particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+        .particle { position: absolute; border-radius: 50%; background: white; animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; } 50% { transform: translateY(-20px) translateX(10px); opacity: 0.6; } }
+
         .app-container {
             width: 100%; max-width: 400px; height: 100vh; max-height: 850px;
             display: flex; flex-direction: column; padding: 24px; box-sizing: border-box;
@@ -41,54 +47,69 @@
         .glass-panel {
             background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         h1 { font-family: 'Space Grotesk', sans-serif; font-size: 14px; letter-spacing: 0.15em; font-weight: 700; }
 
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); }
-        .status-dot.connected { background: var(--safe-green); box-shadow: 0 0 10px var(--safe-green); }
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.5); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: 0.5s; }
+        .status-dot.connected { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 
         .main-module { display: flex; justify-content: center; align-items: center; margin-bottom: 32px; }
         .score-circle { width: 240px; height: 240px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         
-        .progress-ring-circle { 
-            transition: stroke-dashoffset 0.5s ease-out, stroke 0.8s ease; 
-            transform-origin: 50% 50%; 
-            stroke: var(--active-color);
-            filter: drop-shadow(0 0 12px var(--active-color));
-        }
+        .progress-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+        .progress-ring-circle { transition: stroke-dashoffset 0.8s ease, stroke 0.8s ease; transform-origin: 50% 50%; }
 
-        .score-value { 
-            font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 700; 
-            color: var(--active-color); transition: color 0.8s ease, text-shadow 0.8s ease;
-            text-shadow: 0 0 20px var(--active-color);
-        }
-        .score-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.7); margin-top: 8px; }
+        .score-value { font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 700; color: var(--cyan); transition: color 0.8s ease; }
+        .score-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.5); margin-top: 8px; transition: color 0.8s ease; }
 
         .alert-banner {
-            background: rgba(255, 40, 60, 0.15); border: 1px solid rgba(255, 40, 60, 0.4); border-radius: 16px;
+            background: rgba(255, 60, 60, 0.15); border: 1px solid rgba(255, 60, 60, 0.4); border-radius: 16px;
             padding: 16px; display: none; align-items: center; gap: 12px; margin-bottom: 24px;
+            animation: slideIn 0.5s ease forwards;
         }
-        .alert-banner.active { display: flex; animation: pulseRed 2s infinite; }
-        @keyframes pulseRed { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .alert-banner.active { display: flex; }
+        .alert-text h3 { margin: 0; color: var(--red); font-size: 14px; }
+        .alert-text p { margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); }
 
         .data-modules { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
         .data-card { padding: 20px; display: flex; align-items: center; gap: 16px; }
-        .data-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; background: rgba(255,255,255,0.05); }
+        .data-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
+        .icon-hr { background: rgba(255, 60, 60, 0.1); color: #ff8888; }
+        .icon-spo2 { background: rgba(60, 255, 255, 0.1); color: #88ffff; }
+        .icon-gsr { background: rgba(180, 60, 255, 0.1); color: #d488ff; }
 
         .connect-btn {
             background: var(--glass-bg); border: 1px solid var(--glass-border); color: white;
             padding: 18px; border-radius: 16px; font-size: 13px; letter-spacing: 0.1em;
             cursor: pointer; backdrop-filter: blur(10px); width: 100%; transition: 0.3s;
         }
+
+        /* DYNAMIC STATES */
+        /* LOW: Cyan/Green */
+        .state-low .progress-ring-circle { stroke: var(--cyan); filter: drop-shadow(0 0 8px var(--cyan)); }
+        .state-low .score-value { color: var(--cyan); }
+
+        /* MODERATE: Yellow */
+        .state-moderate .progress-ring-circle { stroke: var(--yellow); filter: drop-shadow(0 0 10px var(--yellow)); }
+        .state-moderate .score-value { color: var(--yellow); }
+        .state-moderate .score-label { color: var(--yellow); opacity: 0.8; }
+
+        /* HIGH: Red */
+        .state-high .progress-ring-circle { stroke: var(--red); filter: drop-shadow(0 0 15px var(--red)); }
+        .state-high .score-value { color: var(--red); text-shadow: 0 0 20px rgba(255, 60, 60, 0.4); }
+        .state-high .score-label { color: var(--red); opacity: 0.9; }
     </style>
 </head>
 <body>
     <div class="cosmic-bg"></div>
+    <div class="particles" id="particles"></div>
 
-    <div class="app-container" id="app">
+    <div class="app-container" id="app" class="state-low">
         <header>
             <h1>MIND PULSE</h1>
             <div class="status-indicator">
@@ -98,13 +119,13 @@
         </header>
 
         <div class="main-module">
-            <div class="glass-panel score-circle">
-                <svg width="240" height="240" style="position: absolute; transform: rotate(-90deg);">
+            <div class="glass-panel score-circle" id="scorePanel">
+                <svg class="progress-ring" width="240" height="240">
                     <circle cx="120" cy="120" r="110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"></circle>
-                    <circle class="progress-ring-circle" id="progressRing" cx="120" cy="120" r="110" fill="none" stroke-width="8" stroke-linecap="round"></circle>
+                    <circle class="progress-ring-circle" id="progressRing" cx="120" cy="120" r="110" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round"></circle>
                 </svg>
                 <div class="score-value" id="scoreValue">--</div>
-                <div class="score-label" id="scoreLabel">OFFLINE</div>
+                <div class="score-label" id="scoreLabel">READY</div>
             </div>
         </div>
 
@@ -112,17 +133,26 @@
             <div class="alert-icon">⚠️</div>
             <div class="alert-text">
                 <h3>STRESS SPIKE DETECTED</h3>
-                <p>Breath slowly: 4s In, 4s Out.</p>
+                <p>Triple beep alert. Please breathe deeply.</p>
             </div>
         </div>
 
         <div class="data-modules">
-            <div class="glass-panel data-card"><div class="data-icon">❤️</div><div class="data-info"><p>BPM</p><div class="value" id="bpmValue">--</div></div></div>
-            <div class="glass-panel data-card"><div class="data-icon">💨</div><div class="data-info"><p>SPO2</p><div class="value" id="spo2Value">--</div></div></div>
-            <div class="glass-panel data-card"><div class="data-icon">⚡</div><div class="data-info"><p>GSR</p><div class="value" id="gsrValue">--</div></div></div>
+            <div class="glass-panel data-card">
+                <div class="data-icon icon-hr">❤️</div>
+                <div class="data-info"><p>HEART RATE</p><div class="value"><span id="bpmValue">--</span></div></div>
+            </div>
+            <div class="glass-panel data-card">
+                <div class="data-icon icon-spo2">💨</div>
+                <div class="data-info"><p>SPO2</p><div class="value"><span id="spo2Value">--</span></div></div>
+            </div>
+            <div class="glass-panel data-card">
+                <div class="data-icon icon-gsr">⚡</div>
+                <div class="data-info"><p>GSR RAW</p><div class="value"><span id="gsrValue">--</span></div></div>
+            </div>
         </div>
 
-        <button class="connect-btn" id="connectBtn">PAIR VIA BLUETOOTH</button>
+        <button class="connect-btn" id="connectBtn">CONNECT WATCH</button>
     </div>
 
     <script>
@@ -131,21 +161,31 @@
         const alertSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
         
         let bluetoothDevice;
+        let isBeeping = false;
+
         const circle = document.getElementById('progressRing');
         const circumference = 110 * 2 * Math.PI;
         circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
 
-        // Function for triple beep
-        async function playTripleBeep() {
+        function setProgress(percent) {
+            circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+        }
+
+        // --- Triple Beep Function ---
+        async function tripleBeep() {
+            if (isBeeping) return;
+            isBeeping = true;
             for (let i = 0; i < 3; i++) {
                 alertSound.currentTime = 0;
                 await alertSound.play();
-                await new Promise(r => setTimeout(r, 250)); // Wait 250ms between beeps
+                await new Promise(res => setTimeout(res, 400)); // Gap between beeps
             }
+            isBeeping = false;
         }
 
         document.getElementById('connectBtn').addEventListener('click', async () => {
-            alertSound.play().then(() => { alertSound.pause(); });
+            alertSound.play().then(() => { alertSound.pause(); }); // Unlock audio
             if (Notification.permission !== 'granted') await Notification.requestPermission();
 
             try {
@@ -160,52 +200,50 @@
                     updateDashboard(data);
                 });
 
-                document.getElementById('statusText').textContent = "Live";
+                document.getElementById('statusText').textContent = "Connected";
                 document.getElementById('statusDot').classList.add('connected');
                 document.getElementById('connectBtn').style.display = "none";
             } catch (err) { console.log(err); }
         });
 
         function updateDashboard(data) {
+            const app = document.getElementById('app');
             const score = data.score;
+            
             document.getElementById('scoreValue').textContent = score;
+            document.getElementById('scoreLabel').textContent = data.level;
             document.getElementById('bpmValue').textContent = data.bpm;
             document.getElementById('spo2Value').textContent = data.spo2;
             document.getElementById('gsrValue').textContent = data.gsr;
+            setProgress(score);
 
-            // DYNAMIC COLORS
-            let color;
-            let levelText;
+            // Reset States
+            app.classList.remove('state-low', 'state-moderate', 'state-high');
+            document.getElementById('alertBanner').classList.remove('active');
 
-            if (score <= 40) {
-                color = "#3cff95"; // Green
-                levelText = "Calm";
-            } else if (score <= 75) {
-                color = "#f0ff3c"; // Yellow
-                levelText = "Moderate";
-            } else {
-                color = "#ff3c3c"; // Red
-                levelText = "High Stress";
-            }
-
-            // Apply colors to UI
-            document.documentElement.style.setProperty('--active-color', color);
-            document.getElementById('scoreLabel').textContent = levelText;
-            
-            // Progress Ring
-            const offset = circumference - (score / 100) * circumference;
-            circle.style.strokeDashoffset = offset;
-
-            // Handle High Stress Alerts
             if (score > 75) {
+                app.classList.add('state-high');
                 document.getElementById('alertBanner').classList.add('active');
-                playTripleBeep(); // Trigger the triple beep
+                tripleBeep(); // Trigger the 3-beep alarm
                 if (Notification.permission === 'granted') {
-                    new Notification("STRESS SPIKE", { body: "Your levels are high. Time for a break.", tag: 'stress' });
+                    new Notification("High Stress Detected!", { body: `Your score: ${score}%`, tag: 'stress' });
                 }
+            } else if (score > 40) {
+                app.classList.add('state-moderate');
             } else {
-                document.getElementById('alertBanner').classList.remove('active');
+                app.classList.add('state-low');
             }
+        }
+
+        // Particles
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.width = p.style.height = Math.random() * 3 + 1 + 'px';
+            p.style.top = Math.random() * 100 + '%';
+            p.style.left = Math.random() * 100 + '%';
+            container.appendChild(p);
         }
     </script>
 </body>
