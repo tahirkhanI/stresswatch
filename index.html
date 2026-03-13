@@ -3,31 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mind Pulse - Stress Watch</title>
+    <title>Mind Pulse - Dynamic Stress Watch</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
         :root {
-            --cyan: #3cffff;
-            --red: #ff3c3c;
+            --safe-green: #3cff95;
+            --warn-yellow: #f0ff3c;
+            --alert-red: #ff3c3c;
+            --active-color: var(--safe-green); /* Default dynamic color */
             --bg-dark: #030308;
             --glass-bg: rgba(255, 255, 255, 0.02);
             --glass-border: rgba(255, 255, 255, 0.05);
-            --glass-alert: rgba(255, 40, 60, 0.15);
-            --glass-alert-border: rgba(255, 40, 60, 0.4);
         }
 
         body {
-            background-color: var(--bg-dark);
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg-dark); color: #ffffff;
+            font-family: 'Inter', sans-serif; margin: 0; padding: 0;
+            overflow-x: hidden; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .cosmic-bg {
@@ -35,20 +29,7 @@
                 radial-gradient(circle at 15% 0%, rgba(45, 20, 85, 0.4) 0%, transparent 50%),
                 radial-gradient(circle at 85% 80%, rgba(10, 40, 80, 0.4) 0%, transparent 50%),
                 radial-gradient(circle at 50% 50%, rgba(5, 5, 16, 1) 0%, rgba(3, 3, 8, 1) 100%);
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-        }
-
-        .particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
-        .particle {
-            position: absolute; border-radius: 50%; background: white;
-            animation: float 15s infinite ease-in-out;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
-            50% { transform: translateY(-20px) translateX(10px); opacity: 0.6; }
-            100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
         }
 
         .app-container {
@@ -60,59 +41,52 @@
         .glass-panel {
             background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); transition: all 0.5s ease;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         h1 { font-family: 'Space Grotesk', sans-serif; font-size: 14px; letter-spacing: 0.15em; font-weight: 700; }
 
-        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.5); }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); }
-        .status-dot.connected { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+        .status-dot.connected { background: var(--safe-green); box-shadow: 0 0 10px var(--safe-green); }
 
-        .main-module { display: flex; justify-content: center; align-items: center; margin-bottom: 32px; position: relative; }
+        .main-module { display: flex; justify-content: center; align-items: center; margin-bottom: 32px; }
         .score-circle { width: 240px; height: 240px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         
-        .progress-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
-        .progress-ring-circle { transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s ease; transform-origin: 50% 50%; filter: drop-shadow(0 0 10px rgba(60, 255, 255, 0.3)); }
+        .progress-ring-circle { 
+            transition: stroke-dashoffset 0.5s ease-out, stroke 0.8s ease; 
+            transform-origin: 50% 50%; 
+            stroke: var(--active-color);
+            filter: drop-shadow(0 0 12px var(--active-color));
+        }
 
-        .score-value { font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 700; color: var(--cyan); transition: all 0.5s ease; }
-        .score-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.5); margin-top: 8px; }
+        .score-value { 
+            font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 700; 
+            color: var(--active-color); transition: color 0.8s ease, text-shadow 0.8s ease;
+            text-shadow: 0 0 20px var(--active-color);
+        }
+        .score-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.7); margin-top: 8px; }
 
         .alert-banner {
-            background: var(--glass-alert); border: 1px solid var(--glass-alert-border); border-radius: 16px;
+            background: rgba(255, 40, 60, 0.15); border: 1px solid rgba(255, 40, 60, 0.4); border-radius: 16px;
             padding: 16px; display: none; align-items: center; gap: 12px; margin-bottom: 24px;
-            animation: slideIn 0.5s ease forwards;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .alert-banner.active { display: flex; }
-        .alert-text h3 { margin: 0; color: var(--red); font-size: 14px; }
-        .alert-text p { margin: 0; font-size: 12px; color: rgba(255,255,255,0.7); }
+        .alert-banner.active { display: flex; animation: pulseRed 2s infinite; }
+        @keyframes pulseRed { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
 
         .data-modules { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
         .data-card { padding: 20px; display: flex; align-items: center; gap: 16px; }
-        .data-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
-        .icon-hr { background: rgba(255, 60, 60, 0.1); color: #ff8888; }
-        .icon-spo2 { background: rgba(60, 255, 255, 0.1); color: #88ffff; }
-        .icon-gsr { background: rgba(180, 60, 255, 0.1); color: #d488ff; }
-        .data-info p { margin: 0; font-size: 11px; color: rgba(255,255,255,0.5); }
-        .data-info .value { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
+        .data-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; background: rgba(255,255,255,0.05); }
 
         .connect-btn {
             background: var(--glass-bg); border: 1px solid var(--glass-border); color: white;
             padding: 18px; border-radius: 16px; font-size: 13px; letter-spacing: 0.1em;
             cursor: pointer; backdrop-filter: blur(10px); width: 100%; transition: 0.3s;
         }
-        .connect-btn:active { transform: scale(0.96); }
-
-        /* Alert States */
-        .high-stress .progress-ring-circle { stroke: var(--red); filter: drop-shadow(0 0 15px rgba(255, 60, 60, 0.6)); }
-        .high-stress .score-value { color: var(--red); text-shadow: 0 0 20px rgba(255, 60, 60, 0.6); }
     </style>
 </head>
 <body>
     <div class="cosmic-bg"></div>
-    <div class="particles" id="particles"></div>
 
     <div class="app-container" id="app">
         <header>
@@ -125,139 +99,113 @@
 
         <div class="main-module">
             <div class="glass-panel score-circle">
-                <svg class="progress-ring" width="240" height="240">
+                <svg width="240" height="240" style="position: absolute; transform: rotate(-90deg);">
                     <circle cx="120" cy="120" r="110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"></circle>
-                    <circle class="progress-ring-circle" id="progressRing" cx="120" cy="120" r="110" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-linecap="round"></circle>
+                    <circle class="progress-ring-circle" id="progressRing" cx="120" cy="120" r="110" fill="none" stroke-width="8" stroke-linecap="round"></circle>
                 </svg>
                 <div class="score-value" id="scoreValue">--</div>
-                <div class="score-label" id="scoreLabel">WAITING</div>
+                <div class="score-label" id="scoreLabel">OFFLINE</div>
             </div>
         </div>
 
         <div class="alert-banner" id="alertBanner">
             <div class="alert-icon">⚠️</div>
             <div class="alert-text">
-                <h3>HIGH STRESS ALERT</h3>
-                <p>Take a deep breath and relax.</p>
+                <h3>STRESS SPIKE DETECTED</h3>
+                <p>Breath slowly: 4s In, 4s Out.</p>
             </div>
         </div>
 
         <div class="data-modules">
-            <div class="glass-panel data-card">
-                <div class="data-icon icon-hr">❤️</div>
-                <div class="data-info">
-                    <p>HEART RATE</p>
-                    <div class="value"><span id="bpmValue">--</span> <small style="font-size: 10px; opacity: 0.5;">BPM</small></div>
-                </div>
-            </div>
-            <div class="glass-panel data-card">
-                <div class="data-icon icon-spo2">💨</div>
-                <div class="data-info">
-                    <p>SPO2</p>
-                    <div class="value"><span id="spo2Value">--</span> <small style="font-size: 10px; opacity: 0.5;">%</small></div>
-                </div>
-            </div>
-            <div class="glass-panel data-card">
-                <div class="data-icon icon-gsr">⚡</div>
-                <div class="data-info">
-                    <p>GSR RAW</p>
-                    <div class="value"><span id="gsrValue">--</span> <small style="font-size: 10px; opacity: 0.5;">Ω</small></div>
-                </div>
-            </div>
+            <div class="glass-panel data-card"><div class="data-icon">❤️</div><div class="data-info"><p>BPM</p><div class="value" id="bpmValue">--</div></div></div>
+            <div class="glass-panel data-card"><div class="data-icon">💨</div><div class="data-info"><p>SPO2</p><div class="value" id="spo2Value">--</div></div></div>
+            <div class="glass-panel data-card"><div class="data-icon">⚡</div><div class="data-info"><p>GSR</p><div class="value" id="gsrValue">--</div></div></div>
         </div>
 
-        <button class="connect-btn" id="connectBtn">CONNECT WATCH</button>
+        <button class="connect-btn" id="connectBtn">PAIR VIA BLUETOOTH</button>
     </div>
 
     <script>
-        // --- 1. CONFIG & AUDIO ---
         const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
         const alertSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
         
         let bluetoothDevice;
-        let notificationPermission = false;
-
-        // --- 2. UI ELEMENTS ---
         const circle = document.getElementById('progressRing');
-        const radius = circle.r.baseVal.value;
-        const circumference = radius * 2 * Math.PI;
+        const circumference = 110 * 2 * Math.PI;
         circle.style.strokeDasharray = `${circumference} ${circumference}`;
-        circle.style.strokeDashoffset = circumference;
 
-        function setProgress(percent) {
-            const offset = circumference - (percent / 100) * circumference;
-            circle.style.strokeDashoffset = offset;
+        // Function for triple beep
+        async function playTripleBeep() {
+            for (let i = 0; i < 3; i++) {
+                alertSound.currentTime = 0;
+                await alertSound.play();
+                await new Promise(r => setTimeout(r, 250)); // Wait 250ms between beeps
+            }
         }
 
-        // --- 3. BLUETOOTH LOGIC ---
         document.getElementById('connectBtn').addEventListener('click', async () => {
-            // Unlock Audio (Chrome Mobile Requirement)
-            alertSound.play().then(() => { alertSound.pause(); alertSound.currentTime = 0; });
-            
-            // Request Notification Permission
-            if (Notification.permission !== 'granted') {
-                const res = await Notification.requestPermission();
-                notificationPermission = (res === 'granted');
-            }
+            alertSound.play().then(() => { alertSound.pause(); });
+            if (Notification.permission !== 'granted') await Notification.requestPermission();
 
             try {
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }]
-                });
+                bluetoothDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }] });
                 const server = await bluetoothDevice.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
                 const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
                 
                 await char.startNotifications();
                 char.addEventListener('characteristicvaluechanged', (e) => {
-                    const decoder = new TextDecoder('utf-8');
-                    const data = JSON.parse(decoder.decode(e.target.value));
+                    const data = JSON.parse(new TextDecoder().decode(e.target.value));
                     updateDashboard(data);
                 });
 
-                document.getElementById('statusText').textContent = "Connected";
+                document.getElementById('statusText').textContent = "Live";
                 document.getElementById('statusDot').classList.add('connected');
                 document.getElementById('connectBtn').style.display = "none";
-            } catch (err) {
-                console.log(err);
-            }
+            } catch (err) { console.log(err); }
         });
 
         function updateDashboard(data) {
-            document.getElementById('scoreValue').textContent = data.score;
-            document.getElementById('scoreLabel').textContent = data.level;
+            const score = data.score;
+            document.getElementById('scoreValue').textContent = score;
             document.getElementById('bpmValue').textContent = data.bpm;
             document.getElementById('spo2Value').textContent = data.spo2;
             document.getElementById('gsrValue').textContent = data.gsr;
-            setProgress(data.score);
 
-            if (data.score > 75) {
-                document.getElementById('app').classList.add('high-stress');
+            // DYNAMIC COLORS
+            let color;
+            let levelText;
+
+            if (score <= 40) {
+                color = "#3cff95"; // Green
+                levelText = "Calm";
+            } else if (score <= 75) {
+                color = "#f0ff3c"; // Yellow
+                levelText = "Moderate";
+            } else {
+                color = "#ff3c3c"; // Red
+                levelText = "High Stress";
+            }
+
+            // Apply colors to UI
+            document.documentElement.style.setProperty('--active-color', color);
+            document.getElementById('scoreLabel').textContent = levelText;
+            
+            // Progress Ring
+            const offset = circumference - (score / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Handle High Stress Alerts
+            if (score > 75) {
                 document.getElementById('alertBanner').classList.add('active');
-                if (alertSound.paused) alertSound.play();
-                
+                playTripleBeep(); // Trigger the triple beep
                 if (Notification.permission === 'granted') {
-                    new Notification("High Stress Alert!", { body: `Score: ${data.score}% - Relax.`, tag: 'stress' });
+                    new Notification("STRESS SPIKE", { body: "Your levels are high. Time for a break.", tag: 'stress' });
                 }
             } else {
-                document.getElementById('app').classList.remove('high-stress');
                 document.getElementById('alertBanner').classList.remove('active');
-                alertSound.pause();
-                alertSound.currentTime = 0;
             }
-        }
-
-        // --- 4. DECORATION ---
-        const container = document.getElementById('particles');
-        for (let i = 0; i < 25; i++) {
-            const p = document.createElement('div');
-            p.className = 'particle';
-            p.style.width = p.style.height = Math.random() * 3 + 1 + 'px';
-            p.style.top = Math.random() * 100 + '%';
-            p.style.left = Math.random() * 100 + '%';
-            p.style.animationDelay = Math.random() * 5 + 's';
-            container.appendChild(p);
         }
     </script>
 </body>
